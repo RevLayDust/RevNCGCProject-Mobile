@@ -1,0 +1,3542 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <link rel="stylesheet" href="static/css/game.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Galaxy Game</title>
+
+</head>
+
+<body class="star-bg smooth-mode">
+
+  <header class="header">
+
+    <h2 data-i18n="header.title">Galaxy Adventure</h2>
+
+    <div class="game-toolbar" role="group" aria-label="Game utilities" data-i18n-attr="aria-label:toolbar.group">
+      <button type="button" id="toggleHelp" class="toolbar-btn" aria-expanded="false" data-i18n="toolbar.controls">Controls</button>
+      <button type="button" id="toggleAudio" class="toolbar-btn" aria-pressed="true" data-i18n="toolbar.audio.off">Sound Off</button>
+
+      <div class="audio-group">
+        <button type="button" id="audioMenuToggle" class="toolbar-btn" aria-expanded="false" aria-controls="audioMenu" data-i18n="toolbar.audio.menu">Audio Settings</button>
+
+        <div class="audio-menu" id="audioMenu" role="group" data-i18n-attr="aria-label:audio.menu.label" hidden>
+          <h4 class="audio-menu__title" data-i18n="audio.menu.title">Audio Channels</h4>
+
+          <div class="audio-menu__list">
+            <button type="button" id="toggleMusic" class="audio-toggle" aria-pressed="true" data-i18n="audio.music.on">Music: On</button>
+            <button type="button" id="toggleSfx" class="audio-toggle" aria-pressed="true" data-i18n="audio.sfx.on">SFX: On</button>
+            <button type="button" id="toggleAmbient" class="audio-toggle" aria-pressed="true" data-i18n="audio.ambient.on">Ambient: On</button>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" id="toggleFocus" class="toolbar-btn" aria-pressed="false" data-i18n="toolbar.focus.on">Focus HUD</button>
+      <button type="button" id="langToggle" class="toolbar-btn" aria-pressed="false" data-i18n="toolbar.language">ID/EN</button>
+
+      <div class="mode-switch" data-i18n-attr="aria-label:mode.legend">
+        <span class="mode-switch__legend" data-i18n="mode.legend">Visual Mode</span>
+        <button type="button" id="modeToggle" class="mode-switch__toggle" role="switch" aria-checked="false" data-mode="smooth">
+          <span class="mode-switch__option mode-switch__option--smooth" data-i18n="mode.smooth" aria-hidden="true">Smooth (Light & Stable)</span>
+          <span class="mode-switch__option mode-switch__option--enhanced" data-i18n="mode.enhanced" aria-hidden="true">Enhanced (Upgraded Effect)</span>
+          <span class="mode-switch__thumb" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+
+    <a href="index.html" class="btn small" data-i18n="header.home">Home</a>
+
+  </header>
+
+
+
+  <main class="game-container">
+
+    <aside class="glass-panel hud">
+
+      <h3 data-i18n="hud.title">Mission Stats</h3>
+
+      <div class="hud-row"><span data-i18n="hud.score">Score</span><span data-score>0</span></div>
+
+      <div class="hud-row"><span data-i18n="hud.wave">Wave</span><span data-wave>1</span></div>
+
+      <div class="hud-row"><span data-i18n="hud.combo">Combo</span><span data-combo>x1.0</span></div>
+      <div class="hud-row"><span data-i18n="hud.escape">Escaped</span><span data-escaped>0 / 10</span></div>
+      <div class="hud-divider"></div>
+
+      <div class="hud-label" data-i18n="hud.shield">Shield</div>
+
+      <div class="meter"><span class="meter-fill" id="shieldFill"></span></div>
+
+      <div class="hud-label" data-i18n="hud.energy">Energy</div>
+
+      <div class="meter"><span class="meter-fill energy" id="energyFill"></span></div>
+
+      <div class="hud-row compact"><span data-i18n="hud.lives">Lives</span><span data-lives>3</span></div>
+
+    </aside>
+
+
+
+    <div class="canvas-wrapper">
+
+      <canvas id="gameCanvas" width="900" height="600" aria-label="Galaxy adventure canvas" data-i18n-attr="aria-label:canvas.label"></canvas>
+
+      <div id="statusBanner" class="status-banner visible">
+
+        <div class="banner-box">
+
+          <h2 id="bannerTitle" data-i18n="banner.launch.title">Launch Sequence</h2>
+
+          <p id="bannerSubtitle" data-i18n="banner.launch.subtitle">Press Enter to begin your mission.</p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <aside class="glass-panel briefing">
+
+      <h3 data-i18n="briefing.title">Flight Deck</h3>
+
+      <ul class="briefing-list">
+
+        <li data-i18n="briefing.item1">W/A/S/D or Arrow keys to maneuver</li>
+
+        <li data-i18n="briefing.item2">Hold Space or tap to fire plasma bolts</li>
+
+        <li data-i18n="briefing.item3">Hold Shift to boost (consumes energy)</li>
+
+        <li data-i18n="briefing.item4">Collect glowing cores for upgrades</li>
+
+        <li data-i18n="briefing.item5">Maintain combos for massive scores</li>
+
+      </ul>
+
+      <p id="missionMessage" class="mission-message" data-i18n="message.default">Tip: keeping the combo alive boosts score rewards.</p>
+
+    </aside>
+
+    <section class="objective-panel" aria-live="polite" aria-label="Mission objectives" data-i18n-attr="aria-label:objective.label">
+
+      <h3 data-i18n="objective.heading">Mission Queue</h3>
+
+      <ul class="objective-list">
+
+        <li data-objective="combo" data-i18n="objective.combo" data-i18n-html="true">Hold combo above <strong>x2</strong> for 12 seconds.</li>
+
+        <li data-objective="power" data-i18n="objective.power" data-i18n-html="true">Collect 3 power cores without losing a life.</li>
+
+        <li data-objective="wave" data-i18n="objective.wave" data-i18n-html="true">Clear a wave under 45 seconds.</li>
+
+      </ul>
+
+    </section>
+
+    <div class="notification-stack" aria-live="polite" aria-atomic="true"></div>
+
+  </main>
+
+
+
+  <div id="controlOverlay" class="control-overlay" hidden>
+
+    <div class="overlay-content" role="dialog" aria-modal="true" aria-labelledby="overlayTitle" tabindex="-1">
+
+      <h2 id="overlayTitle" data-i18n="overlay.title">Flight Controls</h2>
+
+      <button type="button" class="overlay-close" aria-label="Close controls" data-i18n-attr="aria-label:overlay.close">&times;</button>
+
+      <div class="overlay-grid">
+
+        <div>
+
+          <h3 data-i18n="overlay.section.movement">Movement</h3>
+
+          <p data-i18n="overlay.section.movement.detail">W/A/S/D or Arrow keys</p>
+
+        </div>
+
+        <div>
+
+          <h3 data-i18n="overlay.section.fire">Fire</h3>
+
+          <p data-i18n="overlay.section.fire.detail">Hold Space or tap/click</p>
+
+        </div>
+
+        <div>
+
+          <h3 data-i18n="overlay.section.boost">Boost</h3>
+
+          <p data-i18n="overlay.section.boost.detail">Hold Shift (drains energy)</p>
+
+        </div>
+
+        <div>
+
+          <h3 data-i18n="overlay.section.pause">Pause</h3>
+
+          <p data-i18n="overlay.section.pause.detail">Enter/Escape</p>
+
+        </div>
+
+      </div>
+
+      <p class="overlay-tip" data-i18n="overlay.tip">Pro tip: keep an eye on combo bonuses - higher multipliers drop rarer power cores.</p>
+
+    </div>
+
+  </div>
+
+  <audio id="bgm" src="static/audio/music/soundtrack1.wav" preload="auto" loop hidden aria-hidden="true"></audio>
+  <audio id="ambientAudio" src="static/audio/ambient/spaceship-ambient-sfx-164114.mp3" preload="auto" loop hidden aria-hidden="true"></audio>
+
+  <script>
+
+    (() => {
+
+      const canvas = document.getElementById("gameCanvas");
+
+      const ctx = canvas.getContext("2d");
+
+      let gameInstance = null;
+
+      const ui = {
+
+        score: document.querySelector("[data-score]"),
+        wave: document.querySelector("[data-wave]"),
+        combo: document.querySelector("[data-combo]"),
+        escaped: document.querySelector("[data-escaped]"),
+        lives: document.querySelector("[data-lives]"),
+
+        shieldFill: document.getElementById("shieldFill"),
+
+        energyFill: document.getElementById("energyFill"),
+
+        banner: document.getElementById("statusBanner"),
+
+        bannerTitle: document.getElementById("bannerTitle"),
+
+        bannerSubtitle: document.getElementById("bannerSubtitle"),
+
+        message: document.getElementById("missionMessage"),
+
+        notifications: document.querySelector(".notification-stack"),
+
+        objectiveItems: Array.from(document.querySelectorAll(".objective-list li")),
+
+        helpButton: document.getElementById("toggleHelp"),
+
+        audioButton: document.getElementById("toggleAudio"),
+
+        audioMenuToggle: document.getElementById("audioMenuToggle"),
+
+        audioMenu: document.getElementById("audioMenu"),
+
+        audioGroup: document.querySelector(".audio-group"),
+
+        musicToggle: document.getElementById("toggleMusic"),
+
+        sfxToggle: document.getElementById("toggleSfx"),
+
+        ambientToggle: document.getElementById("toggleAmbient"),
+
+        focusButton: document.getElementById("toggleFocus"),
+
+        visualToggle: document.getElementById("modeToggle"),
+
+        overlay: document.getElementById("controlOverlay"),
+
+        overlayClose: document.querySelector(".overlay-close"),
+
+        overlayContent: document.querySelector(".overlay-content"),
+
+        bgm: document.getElementById("bgm"),
+
+        ambientAudio: document.getElementById("ambientAudio"),
+
+
+
+        langButton: document.getElementById("langToggle")
+
+      };
+
+
+
+      if (ui.bgm) {
+
+        ui.bgm.volume = 0.55;
+
+        ui.bgm.loop = true;
+
+      }
+
+
+
+      if (ui.ambientAudio) {
+
+        ui.ambientAudio.volume = 0.35;
+
+        ui.ambientAudio.loop = true;
+
+      }
+
+
+
+      const BASE_WIDTH = 900;
+
+      const DPR = Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
+
+      const FALLBACK_LOCALE = 'en';
+      const numberFormats = { en: 'en-US', id: 'id-ID' };
+      const translations = {
+        en: {
+          'header.title': 'Galaxy Adventure',
+          'toolbar.group': 'Game utilities',
+          'toolbar.controls': 'Controls',
+          'toolbar.audio.off': 'Sound Off',
+          'toolbar.audio.on': 'Sound On',
+          'toolbar.audio.menu': 'Audio Settings',
+          'audio.menu.title': 'Audio Channels',
+          'audio.menu.label': 'Audio channel toggles',
+          'audio.music.on': 'Music: On',
+          'audio.music.off': 'Music: Off',
+          'audio.sfx.on': 'SFX: On',
+          'audio.sfx.off': 'SFX: Off',
+          'audio.ambient.on': 'Ambient: On',
+          'audio.ambient.off': 'Ambient: Off',
+          'toolbar.focus.on': 'Focus HUD',
+          'toolbar.focus.off': 'Show HUD',
+          'toolbar.focus.aria.on': 'Enable focus HUD',
+          'toolbar.focus.aria.off': 'Restore full HUD',
+          'toolbar.language': 'ID/EN',
+          'toolbar.language.aria.en': 'Switch to Indonesian',
+          'toolbar.language.aria.id': 'Switch to English',
+          'mode.legend': 'Visual Mode',
+          'mode.smooth': 'Smooth (Light & Stable)',
+          'mode.enhanced': 'Enhanced (Upgraded Effect)',
+          'mode.aria.smooth': 'Smooth mode (light & stable)',
+          'mode.aria.enhanced': 'Enhanced mode (upgraded effect)',
+          'mode.toast.smooth': 'Light & Stable mode active.',
+          'mode.toast.enhanced': 'Upgraded Effect engaged.',
+          'header.home': 'Home',
+          'hud.title': 'Mission Stats',
+          'hud.score': 'Score',
+          'hud.wave': 'Wave',
+          'hud.combo': 'Combo',
+          'hud.escape': 'Escaped',
+          'hud.shield': 'Shield',
+          'hud.energy': 'Energy',
+          'hud.lives': 'Lives',
+          'banner.launch.title': 'Launch Sequence',
+          'banner.launch.subtitle': 'Press Enter to begin your mission.',
+          'banner.paused.title': 'Paused',
+          'banner.paused.subtitle': 'Press Enter to resume the sortie.',
+          'banner.gameover.title': 'Mission Failed',
+          'banner.gameover.subtitle': 'Press Enter to attempt a new run.',
+          'briefing.title': 'Flight Deck',
+          'briefing.item1': 'W/A/S/D or Arrow keys to maneuver',
+          'briefing.item2': 'Hold Space or tap to fire plasma bolts',
+          'briefing.item3': 'Hold Shift to boost (consumes energy)',
+          'briefing.item4': 'Collect glowing cores for upgrades',
+          'briefing.item5': 'Maintain combos for massive scores',
+          'message.default': 'Tip: keeping the combo alive boosts score rewards.',
+          'message.powerUp': 'Power-up secured: {label}',
+          'objective.label': 'Mission objectives',
+          'objective.heading': 'Mission Queue',
+          'objective.combo': 'Hold combo above <strong>x2</strong> for 12 seconds.',
+          'objective.power': 'Collect 3 power cores without losing a life.',
+          'objective.wave': 'Clear a wave under 45 seconds.',
+          'overlay.title': 'Flight Controls',
+          'overlay.close': 'Close controls',
+          'overlay.section.movement': 'Movement',
+          'overlay.section.movement.detail': 'W/A/S/D or Arrow keys',
+          'overlay.section.fire': 'Fire',
+          'overlay.section.fire.detail': 'Hold Space or tap/click',
+          'overlay.section.boost': 'Boost',
+          'overlay.section.boost.detail': 'Hold Shift (drains energy)',
+          'overlay.section.pause': 'Pause',
+          'overlay.section.pause.detail': 'Enter/Escape',
+          'overlay.tip': 'Pro tip: keep an eye on combo bonuses - higher multipliers drop rarer power cores.',
+          'canvas.label': 'Galaxy adventure canvas',
+          'toast.audioMuted': 'Audio muted.',
+          'toast.audioOn': 'Audio re-enabled.',
+          'toast.audio.musicOn': 'Music channel enabled.',
+          'toast.audio.musicOff': 'Music channel muted.',
+          'toast.audio.sfxOn': 'Effects channel enabled.',
+          'toast.audio.sfxOff': 'Effects channel muted.',
+          'toast.audio.ambientOn': 'Ambient channel enabled.',
+          'toast.audio.ambientOff': 'Ambient channel muted.',
+          'toast.focusOn': 'Focus mode enabled.',
+          'toast.focusOff': 'HUD restored.',
+          'toast.mode.enhanced': 'Upgraded Effect engaged.',
+          'toast.mode.smooth': 'Light & Stable mode active.',
+          'toast.objective.combo': 'Combo objective complete!',
+          'toast.objective.power': 'Power core objective complete!',
+          'toast.objective.wave': 'Speed clear achieved!',
+          'toast.waveReady': 'Wave {wave} ready. Gear up!',
+          'toast.comboStreak': 'Combo streak x{combo}!',
+          'toast.enemyEscaped': 'Enemy slipped past! {remaining} until mission failure.',
+          'toast.escapeLimit': 'Too many enemies escaped. Regroup!',
+          'toast.powerUp': 'Power-up secured: {label}',
+          'mission.hullBreach': 'Hull breach detected. Rerouting power to shields.',
+          'mission.waveOne': 'Wave 1 inbound. Stay sharp, pilot.',
+          'mission.waveIncoming': 'Wave {wave} incoming. Expect {target} hostiles.',
+          'mission.finalTally': 'Final tally: {credits} credits earned.',
+          'tips.keepMoving': 'Tip: keep moving to throw off enemy targeting reticles.',
+          'tips.boost': 'Tip: boosting through danger drains energy fast - watch the gauge.',
+          'tips.combo': 'Tip: combo chains amplify every score payout you earn.',
+          'tips.weapon': 'Tip: weapon cores stack up to a devastating quad volley.',
+          'tips.shield': 'Tip: collect shield orbs before engaging heavy squadrons.',
+          'powerUp.shield': 'Shield +50',
+          'powerUp.energy': 'Energy Core',
+          'powerUp.weapon': 'Weapon Boost'
+        },
+        id: {
+          'header.title': 'Petualangan Galaksi',
+          'toolbar.group': 'Fitur permainan',
+          'toolbar.controls': 'Kontrol',
+          'toolbar.audio.off': 'Suara Mati',
+          'toolbar.audio.on': 'Suara Menyala',
+          'toolbar.audio.menu': 'Pengaturan Audio',
+          'audio.menu.title': 'Saluran Audio',
+          'audio.menu.label': 'Pengaturan saluran audio',
+          'audio.music.on': 'Musik: Aktif',
+          'audio.music.off': 'Musik: Mati',
+          'audio.sfx.on': 'SFX: Aktif',
+          'audio.sfx.off': 'SFX: Mati',
+          'audio.ambient.on': 'Ambient: Aktif',
+          'audio.ambient.off': 'Ambient: Mati',
+          'toolbar.focus.on': 'Fokus HUD',
+          'toolbar.focus.off': 'Tampilkan HUD',
+          'toolbar.focus.aria.on': 'Aktifkan mode fokus HUD',
+          'toolbar.focus.aria.off': 'Pulihkan tampilan HUD',
+          'toolbar.language': 'ID/EN',
+          'toolbar.language.aria.en': 'Ganti ke Bahasa Indonesia',
+          'toolbar.language.aria.id': 'Ganti ke Bahasa Inggris',
+          'mode.legend': 'Mode Visual',
+          'mode.smooth': 'Smooth (Ringan & Stabil)',
+          'mode.enhanced': 'Enhanced (Efek Ditingkatkan)',
+          'mode.aria.smooth': 'Mode smooth (visual ringan & stabil)',
+          'mode.aria.enhanced': 'Mode enhanced (visual ditingkatkan)',
+          'mode.toast.smooth': 'Mode ringan & stabil aktif.',
+          'mode.toast.enhanced': 'Efek ditingkatkan aktif.',
+          'header.home': 'Beranda',
+          'hud.title': 'Statistik Misi',
+          'hud.score': 'Skor',
+          'hud.wave': 'Gelombang',
+          'hud.combo': 'Kombo',
+          'hud.escape': 'Musuh Lolos',
+          'hud.shield': 'Perisai',
+          'hud.energy': 'Energi',
+          'hud.lives': 'Nyawa',
+          'banner.launch.title': 'Proses Peluncuran',
+          'banner.launch.subtitle': 'Tekan Enter untuk memulai misi.',
+          'banner.paused.title': 'Jeda',
+          'banner.paused.subtitle': 'Tekan Enter untuk melanjutkan misi.',
+          'banner.gameover.title': 'Misi Gagal',
+          'banner.gameover.subtitle': 'Tekan Enter untuk mencoba ulang.',
+          'briefing.title': 'Dek Penerbangan',
+          'briefing.item1': 'W/A/S/D atau tombol panah untuk bermanuver',
+          'briefing.item2': 'Tahan Spasi atau ketuk untuk menembakkan plasma',
+          'briefing.item3': 'Tahan Shift untuk boost (menguras energi)',
+          'briefing.item4': 'Kumpulkan inti bercahaya untuk peningkatan',
+          'briefing.item5': 'Pertahankan kombo untuk skor tinggi',
+          'message.default': 'Tip: menjaga kombo tetap hidup meningkatkan hadiah skor.',
+          'message.powerUp': 'Power-up diamankan: {label}',
+          'objective.label': 'Tujuan misi',
+          'objective.heading': 'Daftar Misi',
+          'objective.combo': 'Pertahankan kombo di atas <strong>x2</strong> selama 12 detik.',
+          'objective.power': 'Kumpulkan 3 inti energi tanpa kehilangan nyawa.',
+          'objective.wave': 'Selesaikan satu gelombang dalam 45 detik.',
+          'overlay.title': 'Kontrol Penerbangan',
+          'overlay.close': 'Tutup kontrol',
+          'overlay.section.movement': 'Gerakan',
+          'overlay.section.movement.detail': 'W/A/S/D atau tombol panah',
+          'overlay.section.fire': 'Menembak',
+          'overlay.section.fire.detail': 'Tahan Spasi atau ketuk/klik',
+          'overlay.section.boost': 'Boost',
+          'overlay.section.boost.detail': 'Tahan Shift (menguras energi)',
+          'overlay.section.pause': 'Jeda',
+          'overlay.section.pause.detail': 'Enter/Escape',
+          'overlay.tip': 'Pro tip: amati bonus kombo - multiplier tinggi menjatuhkan inti yang lebih langka.',
+          'canvas.label': 'Kanvas petualangan galaksi',
+          'toast.audioMuted': 'Audio dimatikan.',
+          'toast.audioOn': 'Audio diaktifkan kembali.',
+          'toast.focusOn': 'Mode fokus aktif.',
+          'toast.focusOff': 'HUD kembali.',
+          'toast.mode.enhanced': 'Efek ditingkatkan aktif.',
+          'toast.mode.smooth': 'Mode ringan & stabil aktif.',
+          'toast.objective.combo': 'Objektif kombo tercapai!',
+          'toast.objective.power': 'Objektif inti energi tercapai!',
+          'toast.objective.wave': 'Pembersihan cepat tercapai!',
+          'toast.waveReady': 'Gelombang {wave} siap. Bersiaplah!',
+          'toast.comboStreak': 'Kombo x{combo}!',
+          'toast.enemyEscaped': 'Musuh lolos! Sisa toleransi: {remaining}',
+          'toast.escapeLimit': 'Terlalu banyak musuh lolos. Susun ulang strategi!',
+          'toast.powerUp': 'Power-up diamankan: {label}',
+          'mission.hullBreach': 'Kerusakan lambung terdeteksi. Mengalihkan daya ke perisai.',
+          'mission.waveOne': 'Gelombang 1 mendekat. Tetap waspada, pilot.',
+          'mission.waveIncoming': 'Gelombang {wave} datang. Perkirakan {target} musuh.',
+          'mission.finalTally': 'Rekap akhir: {credits} kredit diperoleh.',
+          'tips.keepMoving': 'Tip: bergerak terus untuk mengacaukan bidikan musuh.',
+          'tips.boost': 'Tip: boost di tengah bahaya cepat menguras energi - awasi pengukur.',
+          'tips.combo': 'Tip: rantai kombo melipatgandakan setiap poin yang kamu dapat.',
+          'tips.weapon': 'Tip: inti senjata dapat ditumpuk hingga tembakan quad yang dahsyat.',
+          'tips.shield': 'Tip: kumpulkan orb perisai sebelum menghadapi skuadron berat.',
+          'powerUp.shield': 'Perisai +50',
+          'powerUp.energy': 'Inti Energi',
+          'powerUp.weapon': 'Peningkatan Senjata'
+        }
+      };
+      const TIP_KEYS = [
+        'tips.keepMoving',
+        'tips.boost',
+        'tips.combo',
+        'tips.weapon',
+        'tips.shield'
+      ];
+
+      let currentLocale = FALLBACK_LOCALE;
+
+      const parseParams = (value) => {
+        if (!value) return undefined;
+        try {
+          return JSON.parse(value);
+        } catch {
+          return undefined;
+        }
+      };
+
+      const formatTemplate = (template, params = {}) => template.replace(/\{(\w+)\}/g, (_, token) => (Object.prototype.hasOwnProperty.call(params, token) ? params[token] : `{${token}}`));
+
+      const translate = (key, params = {}, locale = currentLocale) => {
+        const dictionary = translations[locale] || translations[FALLBACK_LOCALE] || {};
+        if (typeof dictionary[key] === 'undefined' && locale !== FALLBACK_LOCALE) {
+          return translate(key, params, FALLBACK_LOCALE);
+        }
+        const template = dictionary[key];
+        if (typeof template === 'string') {
+          return formatTemplate(template, params);
+        }
+        return typeof template === 'function' ? template(params, locale) : key;
+      };
+
+      const formatNumber = (value, options) => {
+        const localeTag = numberFormats[currentLocale] || numberFormats[FALLBACK_LOCALE];
+        try {
+          return value.toLocaleString(localeTag, options);
+        } catch {
+          return value.toLocaleString(undefined, options);
+        }
+      };
+
+      const setI18nContent = (element, key, params = {}, options = {}) => {
+        if (!element || !key) return;
+        element.dataset.i18n = key;
+        if (params && Object.keys(params).length) {
+          element.dataset.i18nParams = JSON.stringify(params);
+        } else {
+          delete element.dataset.i18nParams;
+        }
+        const shouldUseHtml = options.html || element.dataset.i18nHtml === 'true';
+        const value = translate(key, params);
+        if (shouldUseHtml) {
+          element.innerHTML = value;
+        } else {
+          element.textContent = value;
+        }
+      };
+
+      const textNodes = Array.from(document.querySelectorAll('[data-i18n]'));
+      const attrNodes = Array.from(document.querySelectorAll('[data-i18n-attr]'));
+
+      const applyI18nToDom = () => {
+        textNodes.forEach((element) => {
+          const key = element.dataset.i18n;
+          if (!key) return;
+          const params = parseParams(element.dataset.i18nParams);
+          const useHtml = element.dataset.i18nHtml === 'true';
+          const value = translate(key, params);
+          if (useHtml) {
+            element.innerHTML = value;
+          } else {
+            element.textContent = value;
+          }
+        });
+
+        attrNodes.forEach((element) => {
+          const mapping = element.dataset.i18nAttr;
+          if (!mapping) return;
+          mapping.split(';').forEach((token) => {
+            if (!token.trim()) return;
+            const [attr, attrKey] = token.split(':').map((part) => part.trim());
+            if (!attr || !attrKey) return;
+            element.setAttribute(attr, translate(attrKey));
+          });
+        });
+      };
+
+      const state = {
+        audio: {
+          masterMuted: true,
+          channels: {
+            music: true,
+            sfx: true,
+            ambient: true
+          }
+        },
+        focusMode: false,
+        visualMode: "smooth"
+      };
+
+      ui.audioState = state.audio;
+
+      const audioChannelConfig = {
+        music: {
+          element: ui.musicToggle,
+          onKey: 'audio.music.on',
+          offKey: 'audio.music.off',
+          toastOn: 'toast.audio.musicOn',
+          toastOff: 'toast.audio.musicOff'
+        },
+        sfx: {
+          element: ui.sfxToggle,
+          onKey: 'audio.sfx.on',
+          offKey: 'audio.sfx.off',
+          toastOn: 'toast.audio.sfxOn',
+          toastOff: 'toast.audio.sfxOff'
+        },
+        ambient: {
+          element: ui.ambientToggle,
+          onKey: 'audio.ambient.on',
+          offKey: 'audio.ambient.off',
+          toastOn: 'toast.audio.ambientOn',
+          toastOff: 'toast.audio.ambientOff'
+        }
+      };
+
+
+
+      const refreshAudioChannelToggle = (channel) => {
+
+        const config = audioChannelConfig[channel];
+
+        if (!config || !config.element) return;
+
+        const isEnabled = !!state.audio.channels[channel];
+
+        const key = isEnabled ? config.onKey : config.offKey;
+
+        setI18nContent(config.element, key);
+
+        config.element.setAttribute('aria-pressed', isEnabled ? 'true' : 'false');
+
+        config.element.setAttribute('aria-label', translate(key));
+
+      };
+
+
+
+      const refreshAudioChannels = () => {
+
+        Object.keys(audioChannelConfig).forEach(refreshAudioChannelToggle);
+
+      };
+
+
+
+      const shouldPlayChannel = (channel) => !state.audio.masterMuted && !!state.audio.channels[channel];
+
+
+
+      const attemptMediaPlayback = (media) => {
+
+        if (!media) return;
+
+        const playPromise = media.play();
+
+        if (playPromise && typeof playPromise.catch === "function") {
+
+          playPromise.catch(() => {});
+
+        }
+
+      };
+
+
+
+      const toggleAudioMenu = (open, options = {}) => {
+
+        if (!ui.audioMenu || !ui.audioMenuToggle) return;
+
+        const shouldOpen = typeof open === 'boolean' ? open : ui.audioMenu.hasAttribute('hidden');
+
+        if (shouldOpen) {
+
+          ui.audioMenu.removeAttribute('hidden');
+
+          ui.audioMenuToggle.setAttribute('aria-expanded', 'true');
+
+          refreshAudioChannels();
+
+        } else {
+
+          ui.audioMenu.setAttribute('hidden', '');
+
+          ui.audioMenuToggle.setAttribute('aria-expanded', 'false');
+
+          if (options.focusToggle && typeof ui.audioMenuToggle.focus === 'function') {
+
+            ui.audioMenuToggle.focus();
+
+          }
+
+        }
+
+      };
+
+
+
+      const isAudioMenuOpen = () => ui.audioMenu && !ui.audioMenu.hasAttribute('hidden');
+
+
+
+
+
+
+      const refreshAudioButton = () => {
+
+        if (!ui.audioButton) return;
+
+        const key = state.audio.masterMuted ? 'toolbar.audio.off' : 'toolbar.audio.on';
+
+        setI18nContent(ui.audioButton, key);
+
+        const label = translate(key);
+
+        ui.audioButton.setAttribute('aria-label', label);
+
+        ui.audioButton.setAttribute('aria-pressed', state.audio.masterMuted ? 'true' : 'false');
+
+      };
+
+
+
+      const unlockAudioPlayback = () => {
+
+        if (shouldPlayChannel('music')) {
+
+          attemptMediaPlayback(ui.bgm);
+
+        }
+
+        if (shouldPlayChannel('ambient')) {
+
+          attemptMediaPlayback(ui.ambientAudio);
+
+        }
+
+      };
+
+
+
+      const applyAudioState = () => {
+
+        refreshAudioButton();
+
+        refreshAudioChannels();
+
+        if (ui.bgm) {
+
+          const allowMusic = shouldPlayChannel('music');
+
+          ui.bgm.muted = !allowMusic;
+
+          if (allowMusic) {
+
+            attemptMediaPlayback(ui.bgm);
+
+          } else {
+
+            ui.bgm.pause();
+
+          }
+
+        }
+
+        if (ui.ambientAudio) {
+
+          const allowAmbient = shouldPlayChannel('ambient');
+
+          ui.ambientAudio.muted = !allowAmbient;
+
+          if (allowAmbient) {
+
+            attemptMediaPlayback(ui.ambientAudio);
+
+          } else {
+
+            ui.ambientAudio.pause();
+
+          }
+
+        }
+
+        const audioStateDetail = {
+
+          masterMuted: state.audio.masterMuted,
+
+          channels: { ...state.audio.channels }
+
+        };
+
+        if (typeof CustomEvent === 'function') {
+
+          document.dispatchEvent(new CustomEvent('audio:state-change', {
+
+            detail: audioStateDetail
+
+          }));
+
+        }
+
+      };
+
+      const BASE_HEIGHT = 600;
+
+      const pushToast = (text) => {
+
+        if (!ui.notifications) return;
+
+        const toast = document.createElement('div');
+
+        toast.className = 'toast';
+
+        toast.textContent = text;
+
+        ui.notifications.appendChild(toast);
+
+        setTimeout(() => toast.remove(), 4200);
+
+      };
+
+
+
+      const handleChannelToggle = (channel) => {
+
+        const config = audioChannelConfig[channel];
+
+        if (!config || !config.element) return;
+
+        state.audio.channels[channel] = !state.audio.channels[channel];
+
+        applyAudioState();
+
+        const toastKey = state.audio.channels[channel] ? config.toastOn : config.toastOff;
+
+        pushToast(translate(toastKey));
+
+      };
+
+
+
+      const toggleHelpOverlay = (show) => {
+
+        if (!ui.overlay) return;
+
+        const shouldShow = typeof show === "boolean" ? show : ui.overlay.hasAttribute("hidden");
+
+        if (shouldShow) {
+
+          ui.overlay.removeAttribute("hidden");
+
+          if (ui.helpButton) ui.helpButton.setAttribute("aria-expanded", "true");
+
+          if (ui.overlayContent && typeof ui.overlayContent.focus === "function") {
+
+            ui.overlayContent.focus();
+
+          }
+
+        } else {
+
+          ui.overlay.setAttribute("hidden", "");
+
+          if (ui.helpButton) ui.helpButton.setAttribute("aria-expanded", "false");
+
+          if (ui.helpButton && typeof ui.helpButton.focus === "function") {
+
+            ui.helpButton.focus();
+
+          }
+
+        }
+
+      };
+
+
+
+      if (ui.helpButton) {
+
+        ui.helpButton.addEventListener("click", () => {
+
+          const shouldShow = ui.overlay ? ui.overlay.hasAttribute("hidden") : false;
+
+          toggleHelpOverlay(shouldShow);
+
+        });
+
+      }
+
+
+
+      if (ui.overlayClose) {
+
+        ui.overlayClose.addEventListener("click", () => toggleHelpOverlay(false));
+
+      }
+
+
+
+      if (ui.overlay) {
+
+        ui.overlay.addEventListener("click", (event) => {
+
+          if (event.target === ui.overlay) {
+
+            toggleHelpOverlay(false);
+
+          }
+
+        });
+
+      }
+
+
+
+      document.addEventListener("keydown", (event) => {
+
+        if (event.key === "Escape") {
+
+          if (ui.overlay && !ui.overlay.hasAttribute("hidden")) {
+
+            toggleHelpOverlay(false);
+
+            return;
+
+          }
+
+          if (isAudioMenuOpen()) {
+
+            toggleAudioMenu(false, { focusToggle: true });
+
+          }
+
+        }
+
+      });
+
+
+
+      if (ui.audioButton) {
+
+        ui.audioButton.addEventListener("click", () => {
+
+          state.audio.masterMuted = !state.audio.masterMuted;
+
+          applyAudioState();
+
+          pushToast(translate(state.audio.masterMuted ? 'toast.audioMuted' : 'toast.audioOn'));
+
+        });
+
+      }
+
+      if (ui.audioMenuToggle && ui.audioMenu) {
+
+        ui.audioMenuToggle.addEventListener('click', () => {
+
+          toggleAudioMenu();
+
+        });
+
+      }
+
+
+
+      ['music', 'sfx', 'ambient'].forEach((channel) => {
+
+        const config = audioChannelConfig[channel];
+
+        if (!config || !config.element) return;
+
+        config.element.addEventListener('click', () => handleChannelToggle(channel));
+
+      });
+
+
+
+      if (ui.audioGroup && ui.audioMenu && ui.audioMenuToggle) {
+
+        document.addEventListener('pointerdown', (event) => {
+
+          if (!isAudioMenuOpen()) return;
+
+          if (ui.audioGroup.contains(event.target)) return;
+
+          toggleAudioMenu(false);
+
+        });
+
+      }
+
+
+
+      document.addEventListener("pointerdown", unlockAudioPlayback, { once: true });
+
+      document.addEventListener("keydown", unlockAudioPlayback, { once: true });
+
+
+
+      if (ui.focusButton) {
+
+        ui.focusButton.addEventListener("click", () => {
+
+          state.focusMode = !state.focusMode;
+
+          ui.focusButton.setAttribute("aria-pressed", state.focusMode ? "true" : "false");
+
+          const focusKey = state.focusMode ? 'toolbar.focus.off' : 'toolbar.focus.on';
+
+          setI18nContent(ui.focusButton, focusKey);
+
+          const focusAriaKey = state.focusMode ? 'toolbar.focus.aria.off' : 'toolbar.focus.aria.on';
+
+          ui.focusButton.setAttribute('aria-label', translate(focusAriaKey));
+
+          document.body.classList.toggle('focus-mode', state.focusMode);
+
+          pushToast(translate(state.focusMode ? 'toast.focusOn' : 'toast.focusOff'));
+
+        });
+
+      }
+
+
+
+      const applyVisualMode = (mode, options = {}) => {
+
+        const { silent = false, force = false } = options;
+
+        if (mode !== "smooth" && mode !== "enhanced") {
+
+          return;
+
+        }
+
+        if (!force && state.visualMode === mode) {
+
+          return;
+
+        }
+
+
+
+        state.visualMode = mode;
+
+        document.body.classList.toggle("enhanced-mode", mode === "enhanced");
+
+        document.body.classList.toggle("smooth-mode", mode === "smooth");
+
+
+
+        if (ui.visualToggle) {
+
+          ui.visualToggle.dataset.mode = mode;
+
+          ui.visualToggle.setAttribute("aria-checked", mode === "enhanced" ? "true" : "false");
+
+          ui.visualToggle.setAttribute('aria-label', translate(mode === 'enhanced' ? 'mode.aria.enhanced' : 'mode.aria.smooth'));
+
+        }
+
+
+
+        if (gameInstance && typeof gameInstance.setVisualMode === "function") {
+
+          gameInstance.setVisualMode(mode, { force });
+
+        }
+
+
+
+        if (!silent) {
+
+          pushToast(translate(mode === 'enhanced' ? 'toast.mode.enhanced' : 'toast.mode.smooth'));
+
+        }
+
+      };
+
+
+
+      if (ui.visualToggle) {
+
+        ui.visualToggle.addEventListener("click", () => {
+
+          const nextMode = state.visualMode === "smooth" ? "enhanced" : "smooth";
+
+          applyVisualMode(nextMode);
+
+        });
+
+        ui.visualToggle.addEventListener("keydown", (event) => {
+
+          if (event.key === " " || event.key === "Spacebar" || event.key === "Enter") {
+
+            event.preventDefault();
+
+            const nextMode = state.visualMode === "smooth" ? "enhanced" : "smooth";
+
+            applyVisualMode(nextMode);
+
+          }
+
+        });
+
+        applyVisualMode(state.visualMode, { silent: true, force: true });
+
+      } else {
+
+        document.body.classList.add("smooth-mode");
+
+      }
+
+
+
+      const applyLocale = (locale) => {
+
+        const targetLocale = translations[locale] ? locale : FALLBACK_LOCALE;
+
+        currentLocale = targetLocale;
+
+        document.documentElement.setAttribute('lang', targetLocale === 'id' ? 'id' : 'en');
+
+        applyI18nToDom();
+
+        refreshAudioButton();
+
+        refreshAudioChannels();
+
+        if (ui.focusButton) {
+
+          const focusKey = state.focusMode ? 'toolbar.focus.off' : 'toolbar.focus.on';
+
+          setI18nContent(ui.focusButton, focusKey);
+
+          const focusAriaKey = state.focusMode ? 'toolbar.focus.aria.off' : 'toolbar.focus.aria.on';
+
+          ui.focusButton.setAttribute('aria-label', translate(focusAriaKey));
+
+        }
+
+        if (ui.visualToggle) {
+
+          applyVisualMode(state.visualMode, { silent: true, force: true });
+
+        }
+
+        if (ui.langButton) {
+
+          ui.langButton.setAttribute('aria-pressed', targetLocale === 'id' ? 'true' : 'false');
+
+          ui.langButton.setAttribute('aria-label', translate(targetLocale === 'id' ? 'toolbar.language.aria.id' : 'toolbar.language.aria.en'));
+
+        }
+
+        if (gameInstance && typeof gameInstance.refreshLocale === 'function') {
+
+          gameInstance.refreshLocale();
+
+        }
+
+      };
+
+
+
+      if (ui.langButton) {
+
+        ui.langButton.addEventListener('click', () => {
+
+          const nextLocale = currentLocale === 'en' ? 'id' : 'en';
+
+          applyLocale(nextLocale);
+
+        });
+
+      }
+
+
+
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+      canvas.width = BASE_WIDTH * DPR;
+
+      canvas.height = BASE_HEIGHT * DPR;
+
+      ctx.scale(DPR, DPR);
+
+
+
+      const applyCanvasScale = () => {
+
+        const scale = clamp((window.innerWidth - 160) / BASE_WIDTH, 0.45, 1);
+
+        const safeScale = Number.isFinite(scale) ? scale : 1;
+
+        canvas.style.width = `${BASE_WIDTH * safeScale}px`;
+
+        canvas.style.height = `${BASE_HEIGHT * safeScale}px`;
+
+      };
+
+
+
+      applyCanvasScale();
+
+      window.addEventListener("resize", applyCanvasScale);
+
+
+
+      const randFloat = (min, max) => Math.random() * (max - min) + min;
+
+      const randInt = (min, max) => Math.floor(randFloat(min, max + 1));
+
+      const randChoice = (items) => items[Math.floor(Math.random() * items.length)];
+
+
+
+      const BLOCKED_KEYS = new Set([" ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
+
+      class InputManager {
+
+        constructor(element) {
+
+          this.element = element;
+
+          this.keys = new Set();
+
+          this.justPressed = new Set();
+
+          this.pointer = { active: false, justPressed: false, x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 };
+
+
+
+          window.addEventListener("keydown", (event) => {
+
+            const normalized = this.normalize(event.key);
+
+            this.keys.add(event.key);
+
+            this.keys.add(normalized);
+
+            if (!event.repeat) {
+
+              this.justPressed.add(normalized);
+
+            }
+
+            if (BLOCKED_KEYS.has(event.key) || BLOCKED_KEYS.has(normalized)) {
+
+              event.preventDefault();
+
+            }
+
+          });
+
+
+
+          window.addEventListener("keyup", (event) => {
+
+            const normalized = this.normalize(event.key);
+
+            this.keys.delete(event.key);
+
+            this.keys.delete(normalized);
+
+          });
+
+
+
+          element.addEventListener("pointerdown", (event) => {
+
+            this.pointer.active = true;
+
+            this.pointer.justPressed = true;
+
+            this.updatePointer(event);
+
+            try {
+
+              element.setPointerCapture(event.pointerId);
+
+            } catch (_) {
+
+              /* ignored */
+
+            }
+
+          });
+
+
+
+          element.addEventListener("pointermove", (event) => this.updatePointer(event));
+
+
+
+          element.addEventListener("pointerup", (event) => {
+
+            this.pointer.active = false;
+
+            this.pointer.justPressed = false;
+
+            try {
+
+              element.releasePointerCapture(event.pointerId);
+
+            } catch (_) {
+
+              /* ignored */
+
+            }
+
+          });
+
+
+
+          element.addEventListener("pointerleave", () => {
+
+            this.pointer.active = false;
+
+            this.pointer.justPressed = false;
+
+          });
+
+
+
+          element.addEventListener("contextmenu", (event) => event.preventDefault());
+
+        }
+
+        normalize(key) {
+
+          if (!key) {
+
+            return "";
+
+          }
+
+          return key.length === 1 ? key.toLowerCase() : key;
+
+        }
+
+
+
+        isDown(key) {
+
+          const normalized = this.normalize(key);
+
+          return this.keys.has(key) || this.keys.has(normalized);
+
+        }
+
+
+
+        wasPressed(key) {
+
+          const normalized = this.normalize(key);
+
+          if (this.justPressed.has(normalized)) {
+
+            this.justPressed.delete(normalized);
+
+            return true;
+
+          }
+
+          return false;
+
+        }
+
+
+
+        consumeFirePress() {
+
+          if (this.pointer.justPressed) {
+
+            this.pointer.justPressed = false;
+
+            return true;
+
+          }
+
+          const fireKeys = [" ", "space", "Spacebar", "Space"];
+
+          return fireKeys.some((key) => this.wasPressed(key));
+
+        }
+
+
+
+        flushFrame() {
+
+          this.justPressed.clear();
+
+          this.pointer.justPressed = false;
+
+        }
+
+
+
+        getAxis() {
+
+          let x = 0;
+
+          let y = 0;
+
+          if (this.isDown("ArrowLeft") || this.isDown("a")) x -= 1;
+
+          if (this.isDown("ArrowRight") || this.isDown("d")) x += 1;
+
+          if (this.isDown("ArrowUp") || this.isDown("w")) y -= 1;
+
+          if (this.isDown("ArrowDown") || this.isDown("s")) y += 1;
+
+          return { x, y };
+
+        }
+
+
+
+        updatePointer(event) {
+
+          const rect = this.element.getBoundingClientRect();
+
+          const scaleX = BASE_WIDTH / rect.width;
+
+          const scaleY = BASE_HEIGHT / rect.height;
+
+          this.pointer.x = (event.clientX - rect.left) * scaleX;
+
+          this.pointer.y = (event.clientY - rect.top) * scaleY;
+
+        }
+
+      }
+
+      class Star {
+
+        constructor(game) {
+
+          this.game = game;
+
+          this.reset(true);
+
+        }
+
+
+
+        reset(initial = false) {
+
+          this.x = Math.random() * this.game.width;
+
+          this.y = initial ? Math.random() * this.game.height : -4;
+
+          this.depth = randFloat(0.6, 3.2);
+
+          this.speed = 18 * this.depth;
+
+          this.size = this.depth * randFloat(0.4, 1.1);
+
+          this.alpha = clamp(0.25 + this.depth * 0.15, 0.25, 0.9);
+
+        }
+
+
+
+        update(dt) {
+
+          this.y += this.speed * dt;
+
+          if (this.y > this.game.height + 6) {
+
+            this.reset();
+
+          }
+
+        }
+
+
+
+        draw(ctx) {
+
+          ctx.globalAlpha = this.alpha;
+
+          ctx.fillStyle = "#ffffff";
+
+          ctx.fillRect(this.x, this.y, this.size, this.size);
+
+          ctx.globalAlpha = 1;
+
+        }
+
+      }
+
+
+
+      class Particle {
+
+        constructor(x, y, color) {
+
+          this.x = x;
+
+          this.y = y;
+
+          this.vx = randFloat(-140, 140);
+
+          this.vy = randFloat(-140, 140);
+
+          this.life = randFloat(0.4, 0.8);
+
+          this.size = randFloat(1.2, 2.8);
+
+          this.color = color;
+
+        }
+
+
+
+        update(dt) {
+
+          this.life -= dt;
+
+          this.x += this.vx * dt;
+
+          this.y += this.vy * dt;
+
+          this.vy += 35 * dt;
+
+        }
+
+
+
+        draw(ctx) {
+
+          if (this.life <= 0) {
+
+            return;
+
+          }
+
+          ctx.globalAlpha = clamp(this.life * 1.5, 0, 1);
+
+          ctx.fillStyle = this.color;
+
+          ctx.fillRect(this.x, this.y, this.size, this.size);
+
+          ctx.globalAlpha = 1;
+
+        }
+
+
+
+        get expired() {
+
+          return this.life <= 0;
+
+        }
+
+      }
+
+
+
+      class Projectile {
+
+        constructor(game, x, y, angle, speed, damage) {
+
+          this.game = game;
+
+          this.x = x;
+
+          this.y = y;
+
+          this.angle = angle;
+
+          this.speed = speed;
+
+          this.damage = damage;
+
+          this.radius = 4;
+
+          this.life = 1.2;
+
+        }
+
+
+
+        update(dt) {
+
+          this.life -= dt;
+
+          this.x += Math.cos(this.angle) * this.speed * dt;
+
+          this.y += Math.sin(this.angle) * this.speed * dt;
+
+        }
+
+
+
+        draw(ctx) {
+
+          ctx.save();
+
+          ctx.translate(this.x, this.y);
+
+          ctx.rotate(this.angle);
+
+          ctx.fillStyle = "#00f6ff";
+
+          ctx.fillRect(-2, -12, 4, 16);
+
+          ctx.restore();
+
+        }
+
+
+
+        get expired() {
+
+          return (
+
+            this.life <= 0 ||
+
+            this.y < -30 ||
+
+            this.y > this.game.height + 30 ||
+
+            this.x < -30 ||
+
+            this.x > this.game.width + 30
+
+          );
+
+        }
+
+      }
+
+
+
+      class EnemyProjectile {
+
+        constructor(game, x, y, angle, speed, damage) {
+
+          this.game = game;
+
+          this.x = x;
+
+          this.y = y;
+
+          this.angle = angle;
+
+          this.speed = speed;
+
+          this.damage = damage;
+
+          this.radius = 6;
+
+          this.life = 3.5;
+
+        }
+
+
+
+        update(dt) {
+
+          this.life -= dt;
+
+          this.x += Math.cos(this.angle) * this.speed * dt;
+
+          this.y += Math.sin(this.angle) * this.speed * dt;
+
+        }
+
+
+
+        draw(ctx) {
+
+          ctx.save();
+
+          ctx.translate(this.x, this.y);
+
+          ctx.rotate(this.angle);
+
+          ctx.fillStyle = "#ff926b";
+
+          ctx.fillRect(-3, -10, 6, 18);
+
+          ctx.restore();
+
+        }
+
+
+
+        get expired() {
+
+          return (
+
+            this.life <= 0 ||
+
+            this.y > this.game.height + 40 ||
+
+            this.y < -60 ||
+
+            this.x < -60 ||
+
+            this.x > this.game.width + 60
+
+          );
+
+        }
+
+      }
+
+      const POWER_UP_TYPES = [
+
+        {
+
+          id: "shield",
+
+          color: "#01f1ff",
+
+          labelKey: 'powerUp.shield',
+
+          apply(player) {
+
+            player.shield = clamp(player.shield + 50, 0, player.maxShield);
+
+          }
+
+        },
+
+        {
+
+          id: "energy",
+
+          color: "#a855f7",
+
+          labelKey: 'powerUp.energy',
+
+          apply(player) {
+
+            player.energy = player.maxEnergy;
+
+          }
+
+        },
+
+        {
+
+          id: "weapon",
+
+          color: "#facc15",
+
+          labelKey: 'powerUp.weapon',
+
+          apply(player) {
+
+            player.upgradeWeapon();
+
+          }
+
+        }
+
+      ];
+
+
+
+      class PowerUp {
+
+        constructor(game, x, y, type) {
+
+          this.game = game;
+
+          this.x = x;
+
+          this.y = y;
+
+          this.type = type;
+
+          this.radius = 14;
+
+          this.life = 8;
+
+          this.speed = 35;
+
+          this.phase = Math.random() * Math.PI * 2;
+
+          this.collected = false;
+
+        }
+
+
+
+        update(dt) {
+
+          this.phase += dt * 3;
+
+          this.y += this.speed * dt;
+
+          this.life -= dt;
+
+        }
+
+
+
+        draw(ctx) {
+
+          if (this.collected) {
+
+            return;
+
+          }
+
+          ctx.save();
+
+          ctx.translate(this.x, this.y + Math.sin(this.phase) * 4);
+
+          ctx.strokeStyle = this.type.color;
+
+          ctx.lineWidth = 2;
+
+          ctx.beginPath();
+
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+
+          ctx.stroke();
+
+          ctx.beginPath();
+
+          ctx.arc(0, 0, this.radius * 0.55, 0, Math.PI * 2);
+
+          ctx.stroke();
+
+          ctx.fillStyle = this.type.color;
+
+          ctx.globalAlpha = 0.25 + 0.15 * Math.sin(this.phase * 2);
+
+          ctx.fill();
+
+          ctx.restore();
+
+          ctx.globalAlpha = 1;
+
+        }
+
+
+
+        apply(player) {
+
+          this.type.apply(player);
+
+          this.collected = true;
+
+          const key = this.type.labelKey;
+
+          if (key) {
+
+            return translate(key);
+
+          }
+
+          return this.type.label || '';
+
+        }
+
+
+
+        get expired() {
+
+          return this.life <= 0 || this.y > this.game.height + this.radius;
+
+        }
+
+      }
+
+      const ENEMY_ARCHETYPES = [
+
+        { id: "scout", minWave: 1, weight: 5, radius: 16, speed: 80, hp: 40, score: 110, behavior: "sine", waveAmplitude: 28, dropChance: 0.14, color: "#ffdd59" },
+
+        { id: "raider", minWave: 2, weight: 4, radius: 18, speed: 96, hp: 55, score: 170, behavior: "drift", dropChance: 0.16, color: "#f97316", canShoot: true, fireRate: 3.4 },
+
+        { id: "sentinel", minWave: 3, weight: 2, radius: 22, speed: 70, hp: 110, score: 260, behavior: "straight", dropChance: 0.20, color: "#a855f7", canShoot: true, fireRate: 2.6 },
+
+        { id: "hunter", minWave: 4, weight: 2, radius: 20, speed: 82, hp: 90, score: 240, behavior: "hunter", dropChance: 0.18, color: "#22d3ee", canShoot: true, fireRate: 2.2 },
+
+        { id: "storm", minWave: 5, weight: 1, radius: 24, speed: 110, hp: 140, score: 420, behavior: "sine", waveAmplitude: 54, dropChance: 0.28, color: "#fb7185", canShoot: true, fireRate: 1.8 }
+
+      ];
+
+
+
+      class Enemy {
+
+        constructor(game, blueprint, x) {
+
+          this.game = game;
+
+          this.blueprint = blueprint;
+
+          this.x = x;
+
+          this.y = -blueprint.radius * 2;
+
+          this.radius = blueprint.radius;
+
+          this.speed = blueprint.speed + game.wave * 6;
+
+          this.hp = blueprint.hp + game.wave * 8;
+
+          this.scoreValue = blueprint.score + game.wave * 12;
+
+          this.behavior = blueprint.behavior;
+
+          this.waveAmplitude = blueprint.waveAmplitude || 0;
+
+          this.phase = Math.random() * Math.PI * 2;
+
+          this.dropChance = blueprint.dropChance || 0.12;
+
+          this.canShoot = Boolean(blueprint.canShoot);
+
+          this.fireRate = blueprint.fireRate || 2.8;
+
+          this.fireTimer = randFloat(0.6, 1.4) * this.fireRate;
+
+          this.color = blueprint.color;
+
+          this.dead = false;
+
+        }
+
+
+
+        update(dt) {
+
+          this.y += this.speed * dt;
+
+
+
+          switch (this.behavior) {
+
+            case "sine":
+
+              this.x += Math.sin(this.y * 0.045 + this.phase) * (this.waveAmplitude + this.game.wave * 4) * dt;
+
+              break;
+
+            case "hunter": {
+
+              const target = this.game.player;
+
+              const angle = Math.atan2(target.y - this.y, target.x - this.x);
+
+              this.x += Math.cos(angle) * 52 * dt;
+
+              this.y += Math.sin(angle) * 26 * dt;
+
+              break;
+
+            }
+
+            case "drift":
+
+              this.x += Math.cos(this.phase) * 28 * dt;
+
+              this.phase += dt * 0.75;
+
+              break;
+
+            default:
+
+              break;
+
+          }
+
+
+
+          this.x = clamp(this.x, this.radius + 12, this.game.width - this.radius - 12);
+
+
+
+          if (this.canShoot) {
+
+            this.fireTimer -= dt;
+
+            if (this.fireTimer <= 0) {
+
+              this.fireTimer = this.fireRate * randFloat(0.8, 1.4);
+
+              const player = this.game.player;
+
+              const angle = Math.atan2(player.y - this.y, player.x - this.x);
+
+              const speed = 180 + this.game.wave * 6;
+
+              this.game.enemyProjectiles.push(
+
+                new EnemyProjectile(this.game, this.x, this.y + this.radius, angle, speed, 28)
+
+              );
+
+            }
+
+          }
+
+
+
+          if (this.y > this.game.height + this.radius * 2) {
+
+            if (!this.dead) {
+
+              this.dead = true;
+
+              this.game.onEnemyEscaped(this);
+
+            }
+
+          }
+
+        }
+
+
+
+        hit(damage) {
+
+          this.hp -= damage;
+
+          if (this.hp <= 0 && !this.dead) {
+
+            this.dead = true;
+
+            this.game.onEnemyDestroyed(this);
+
+          }
+
+        }
+
+
+
+        draw(ctx) {
+
+          ctx.save();
+
+          ctx.translate(this.x, this.y);
+
+          ctx.fillStyle = this.color;
+
+          ctx.beginPath();
+
+          ctx.moveTo(0, -this.radius);
+
+          ctx.lineTo(this.radius * 0.8, this.radius * 0.9);
+
+          ctx.lineTo(-this.radius * 0.8, this.radius * 0.9);
+
+          ctx.closePath();
+
+          ctx.fill();
+
+
+
+          const baseHp = this.blueprint.hp + this.game.wave * 8;
+
+          const hpRatio = clamp(this.hp / baseHp, 0, 1);
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+
+          ctx.fillRect(-this.radius * 0.8, this.radius * 0.95, this.radius * 1.6, 5);
+
+          ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+
+          ctx.fillRect(-this.radius * 0.8, this.radius * 0.95, this.radius * 1.6 * hpRatio, 5);
+
+          ctx.restore();
+
+        }
+
+      }
+
+      class Player {
+
+        constructor(game) {
+
+          this.game = game;
+
+          this.maxShield = 120;
+
+          this.maxEnergy = 100;
+
+          this.maxLives = 3;
+
+          this.fireRate = 0.3;
+
+          this.weaponLevel = 1;
+
+          this.reset();
+
+        }
+
+
+
+        reset() {
+
+          this.x = this.game.width / 2;
+
+          this.y = this.game.height - 90;
+
+          this.radius = 16;
+
+          this.speed = 220;
+
+          this.boostSpeed = 360;
+
+          this.cooldown = 0;
+
+          this.shield = this.maxShield;
+
+          this.energy = this.maxEnergy;
+
+          this.lives = this.maxLives;
+
+          this.invulnerable = 1.2;
+
+          this.weaponLevel = 1;
+
+        }
+
+
+
+        update(dt, input) {
+
+          const axis = input.getAxis();
+
+          let moveX = axis.x;
+
+          let moveY = axis.y;
+
+          if (moveX !== 0 || moveY !== 0) {
+
+            const mag = Math.hypot(moveX, moveY) || 1;
+
+            moveX /= mag;
+
+            moveY /= mag;
+
+          }
+
+
+
+          const boosting = (input.isDown("Shift") || input.isDown("shift")) && this.energy > 0;
+
+          const velocity = boosting ? this.boostSpeed : this.speed;
+
+          this.x += moveX * velocity * dt;
+
+          this.y += moveY * velocity * dt;
+
+          this.x = clamp(this.x, this.radius + 10, this.game.width - this.radius - 10);
+
+          this.y = clamp(this.y, this.radius + 10, this.game.height - this.radius - 10);
+
+
+
+          if (boosting) {
+
+            this.energy = clamp(this.energy - 38 * dt, 0, this.maxEnergy);
+
+          } else {
+
+            this.energy = clamp(this.energy + 22 * dt, 0, this.maxEnergy);
+
+          }
+
+
+          this.cooldown = Math.max(0, this.cooldown - dt);
+
+          const fireAttempted = input.consumeFirePress();
+
+          if (fireAttempted && this.cooldown <= 0) {
+
+            this.fire(input);
+
+          }
+
+
+
+          if (this.invulnerable > 0) {
+
+            this.invulnerable -= dt;
+
+          }
+
+        }
+
+
+
+        fire(input) {
+
+          const shotSpeed = 540;
+
+          const baseAngle = input.pointer.active
+
+            ? Math.atan2(input.pointer.y - this.y, input.pointer.x - this.x)
+
+            : -Math.PI / 2;
+
+          const spread = 0.18;
+
+          const angles = [baseAngle];
+
+          if (this.weaponLevel >= 2) {
+
+            angles.push(baseAngle - spread, baseAngle + spread);
+
+          }
+
+          if (this.weaponLevel >= 3) {
+
+            angles.push(baseAngle - spread * 1.8, baseAngle + spread * 1.8);
+
+          }
+
+          if (this.weaponLevel >= 4) {
+
+            angles.push(baseAngle);
+
+          }
+
+
+
+          const uniqueAngles = Array.from(new Set(angles));
+
+          for (const angle of uniqueAngles) {
+
+            this.game.projectiles.push(new Projectile(this.game, this.x, this.y - this.radius, angle, shotSpeed, 45));
+
+          }
+
+
+
+          this.cooldown = this.fireRate * Math.max(0.58, 1 - this.weaponLevel * 0.08);
+
+          this.game.addParticles(this.x, this.y + 10, 6, "#00d0ff");
+
+        }
+
+
+
+        takeDamage(amount) {
+
+          if (this.invulnerable > 0) {
+
+            return true;
+
+          }
+
+
+
+          let remaining = amount;
+
+          if (this.shield > 0) {
+
+            const absorbed = Math.min(this.shield, remaining);
+
+            this.shield -= absorbed;
+
+            remaining -= absorbed;
+
+          }
+
+
+
+          if (remaining > 0) {
+
+            this.lives -= 1;
+
+            this.invulnerable = 2.3;
+
+            this.shield = Math.min(this.maxShield, this.shield + this.maxShield * 0.4);
+
+            this.game.setMissionMessage('mission.hullBreach', 4);
+
+            this.x = this.game.width / 2;
+
+            this.y = this.game.height - 90;
+
+          }
+
+
+
+          return this.lives > 0;
+
+        }
+
+
+
+        upgradeWeapon() {
+
+          this.weaponLevel = clamp(this.weaponLevel + 1, 1, 4);
+
+        }
+
+
+
+        draw(ctx) {
+
+          if (this.invulnerable > 0 && Math.floor(this.invulnerable * 10) % 2 === 0) {
+
+            return;
+
+          }
+
+          ctx.save();
+
+          ctx.translate(this.x, this.y);
+
+          ctx.beginPath();
+
+          ctx.moveTo(0, -this.radius);
+
+          ctx.lineTo(this.radius * 0.82, this.radius * 0.9);
+
+          ctx.lineTo(0, this.radius * 0.45);
+
+          ctx.lineTo(-this.radius * 0.82, this.radius * 0.9);
+
+          ctx.closePath();
+
+          ctx.fillStyle = "#6be7ff";
+
+          ctx.fill();
+
+
+
+          ctx.beginPath();
+
+          ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+
+          ctx.strokeStyle = `rgba(0, 234, 255, ${clamp(this.shield / this.maxShield, 0.15, 0.9)})`;
+
+          ctx.lineWidth = 2;
+
+          ctx.stroke();
+
+          ctx.restore();
+
+        }
+
+      }
+
+      class Game {
+
+        constructor(ctx, input, ui) {
+
+          this.ctx = ctx;
+
+          this.input = input;
+
+          this.ui = ui;
+
+          this.width = BASE_WIDTH;
+
+          this.height = BASE_HEIGHT;
+
+          this.defaultTipKey = 'message.default';
+
+          this.messageKey = null;
+
+          this.messageParams = {};
+
+          this.bannerTitleKey = null;
+
+          this.bannerSubtitleKey = null;
+
+          this.bannerTitleParams = {};
+
+          this.bannerSubtitleParams = {};
+
+          this.frame = this.frame.bind(this);
+
+          this.reset();
+
+          window.addEventListener("keydown", (event) => this.handleKey(event));
+
+        }
+
+
+
+        reset() {
+
+          this.state = "splash";
+
+          this.lastTime = null;
+
+          const starCount = this.starCountForMode();
+
+          this.stars = Array.from({ length: starCount }, () => new Star(this));
+
+          this.projectiles = [];
+
+          this.enemyProjectiles = [];
+
+          this.enemies = [];
+
+          this.powerUps = [];
+
+          this.particles = [];
+
+          this.setVisualMode(this.visualMode, { force: true });
+
+          this.player = new Player(this);
+
+          this.score = 0;
+
+          this.wave = 1;
+
+          this.comboMultiplier = 1;
+
+          this.comboTimer = 0;
+
+          this.maxComboTime = 5.2;
+
+          this.spawnInterval = 1.05;
+
+          this.spawnTimer = 1.6;
+
+          this.enemyCap = 6;
+
+          this.enemiesSpawned = 0;
+
+          this.waveTarget = 12;
+
+          this.escapeCount = 0;
+
+          this.escapeLimit = 10;
+
+          this.messageTimer = 0;
+
+          this.setDefaultTip({ apply: true });
+
+          this.resetObjectives();
+
+          this.waveStartTimestamp = performance.now();
+
+          this.fxTimer = 0;
+
+          this.effectsMultiplier = this.visualMode === "enhanced" ? 1.35 : 1;
+
+          this.updateHUD();
+
+          this.showBanner('banner.launch.title', 'banner.launch.subtitle');
+
+        }
+
+
+
+        setDefaultTip(options = {}) {
+
+          const { apply = false } = options;
+
+          this.defaultTipKey = randChoice(TIP_KEYS);
+
+          this.defaultMessage = translate(this.defaultTipKey);
+
+          if (apply) {
+
+            this.showDefaultMessage();
+
+          }
+
+        }
+
+
+
+        showDefaultMessage() {
+
+          const key = this.defaultTipKey || 'message.default';
+
+          this.defaultMessage = translate(key);
+
+          this.messageKey = key;
+
+          this.messageParamResolver = null;
+
+          this.messageParams = {};
+
+          setI18nContent(this.ui.message, key);
+
+          this.messageTimer = 0;
+
+        }
+
+
+
+        starCountForMode(mode = this.visualMode) {
+
+          return mode === "enhanced" ? 220 : 180;
+
+        }
+
+
+
+        setVisualMode(mode, options = {}) {
+
+          const { force = false } = options;
+
+          if (mode !== "smooth" && mode !== "enhanced") {
+
+            return;
+
+          }
+
+          if (!force && this.visualMode === mode) {
+
+            return;
+
+          }
+
+          this.visualMode = mode;
+
+          this.effectsMultiplier = mode === "enhanced" ? 1.35 : 1;
+
+          const desiredStars = this.starCountForMode();
+
+          if (Array.isArray(this.stars)) {
+
+            const difference = desiredStars - this.stars.length;
+
+            if (difference > 0) {
+
+              for (let i = 0; i < difference; i += 1) {
+
+                this.stars.push(new Star(this));
+
+              }
+
+            } else if (difference < 0) {
+
+              this.stars.splice(desiredStars);
+
+            }
+
+            this.stars.forEach((star) => star.reset(true));
+
+          }
+
+        }
+
+
+
+        resetObjectives() {
+
+          this.objectives = { combo: false, power: false, wave: false };
+
+          this.powerUpsCollected = 0;
+
+          this.lastWaveClear = Infinity;
+
+          this.waveStartTimestamp = performance.now();
+
+          if (ui.objectiveItems) { ui.objectiveItems.forEach((item) => item.classList.remove('completed')); }
+
+        }
+
+
+
+        markObjective(key) {
+
+          if (!this.objectives[key]) {
+
+            this.objectives[key] = true;
+
+            const indexKey = { combo: 0, power: 1, wave: 2 }[key];
+
+            const target = ui.objectiveItems ? ui.objectiveItems[indexKey] : undefined;
+
+            if (target) {
+
+              target.classList.add('completed');
+
+            }
+
+          }
+
+        }
+
+
+
+        updateObjectives() {
+
+          if (!this.objectives.combo && this.comboMultiplier >= 2.5) {
+
+            this.markObjective('combo');
+
+            pushToast(translate('toast.objective.combo'));
+
+          }
+
+          if (!this.objectives.power && this.powerUpsCollected >= 3) {
+
+            this.markObjective('power');
+
+            pushToast(translate('toast.objective.power'));
+
+          }
+
+          if (!this.objectives.wave && this.lastWaveClear < 45000) {
+
+            this.markObjective('wave');
+
+            pushToast(translate('toast.objective.wave'));
+
+          }
+
+        }
+
+
+
+        handleKey(event) {
+
+          if (event.key === "Enter") {
+
+            if (event.repeat) {
+
+              event.preventDefault();
+
+              return;
+
+            }
+
+            event.preventDefault();
+
+            if (this.state === "splash" || this.state === "gameover") {
+
+              this.start();
+
+            } else if (this.state === "running") {
+
+              this.pause();
+
+            } else if (this.state === "paused") {
+
+              this.resume();
+
+            }
+
+          } else if (event.key === "Escape") {
+
+            if (event.repeat) {
+
+              event.preventDefault();
+
+              return;
+
+            }
+
+            event.preventDefault();
+
+            if (this.state === "running") {
+
+              this.pause();
+
+            } else if (this.state === "paused") {
+
+              this.resume();
+
+            }
+
+          }
+
+        }
+
+
+
+        start() {
+
+          this.state = "running";
+
+          this.resetObjectives();
+
+          this.waveStartTimestamp = performance.now();
+
+          this.lastTime = null;
+
+          this.score = 0;
+
+          this.wave = 1;
+
+          this.comboMultiplier = 1;
+
+          this.comboTimer = 0;
+
+          this.spawnInterval = 1;
+
+          this.spawnTimer = 1.2;
+
+          this.enemyCap = 6;
+
+          this.enemiesSpawned = 0;
+
+          this.waveTarget = 12;
+
+          this.escapeCount = 0;
+
+          this.escapeLimit = 10;
+
+          this.projectiles = [];
+
+          this.enemyProjectiles = [];
+
+          this.enemies = [];
+
+          this.powerUps = [];
+
+          this.particles = [];
+
+          this.player.reset();
+
+          this.player.invulnerable = 1.5;
+
+          this.hideBanner();
+
+          this.setDefaultTip();
+
+          this.setMissionMessage('mission.waveOne', 4.5);
+
+          this.updateObjectives();
+
+          this.updateHUD();
+
+          this.input.flushFrame();
+
+        }
+
+
+
+        pause() {
+
+          if (this.state !== "running") {
+
+            this.updateHUD();
+
+            this.input.flushFrame();
+
+            return;
+
+          }
+
+          this.state = "paused";
+
+          this.lastTime = null;
+
+          this.showBanner('banner.paused.title', 'banner.paused.subtitle');
+
+        }
+
+
+
+        resume() {
+
+          if (this.state !== "paused") {
+
+            return;
+
+          }
+
+          this.state = "running";
+
+          this.lastTime = null;
+
+          this.hideBanner();
+
+        }
+
+
+
+        gameOver() {
+
+          this.state = "gameover";
+
+          this.lastTime = null;
+
+          this.showBanner('banner.gameover.title', 'banner.gameover.subtitle');
+
+          const credits = formatNumber(this.score);
+
+          this.setMissionMessage('mission.finalTally', 6, { credits });
+
+        }
+
+
+
+        showBanner(titleKey, subtitleKey, options = {}) {
+
+          const { titleParams = {}, subtitleParams = {} } = options;
+
+          this.bannerTitleKey = titleKey;
+
+          this.bannerSubtitleKey = subtitleKey;
+
+          this.bannerTitleParams = titleParams;
+
+          this.bannerSubtitleParams = subtitleParams;
+
+          setI18nContent(this.ui.bannerTitle, titleKey, titleParams);
+
+          setI18nContent(this.ui.bannerSubtitle, subtitleKey, subtitleParams);
+
+          this.ui.banner.classList.add("visible");
+
+        }
+
+
+
+        hideBanner() {
+
+          this.ui.banner.classList.remove("visible");
+
+        }
+
+
+
+        setMissionMessage(key, duration = 5, paramsOrResolver = {}) {
+
+          this.messageKey = key;
+
+          this.messageParamResolver = typeof paramsOrResolver === 'function' ? paramsOrResolver : null;
+
+          const resolvedParams = this.messageParamResolver ? (this.messageParamResolver() || {}) : paramsOrResolver;
+
+          this.messageParams = resolvedParams || {};
+
+          setI18nContent(this.ui.message, key, this.messageParams);
+
+          this.messageTimer = duration;
+
+        }
+
+
+
+        refreshLocale() {
+
+          this.defaultMessage = translate(this.defaultTipKey || 'message.default');
+
+          if (this.messageTimer > 0 && this.messageKey) {
+
+            const params = this.messageParamResolver ? (this.messageParamResolver() || {}) : (this.messageParams || {});
+
+            this.messageParams = params;
+
+            setI18nContent(this.ui.message, this.messageKey, params);
+
+          } else {
+
+            this.showDefaultMessage();
+
+          }
+
+          if (this.ui.banner && this.ui.banner.classList.contains('visible')) {
+
+            if (this.bannerTitleKey) {
+
+              setI18nContent(this.ui.bannerTitle, this.bannerTitleKey, this.bannerTitleParams || {});
+
+            }
+
+            if (this.bannerSubtitleKey) {
+
+              setI18nContent(this.ui.bannerSubtitle, this.bannerSubtitleKey, this.bannerSubtitleParams || {});
+
+            }
+
+          }
+
+          this.updateHUD();
+
+        }
+
+
+
+        addParticles(x, y, count, color) {
+
+          for (let i = 0; i < count; i += 1) {
+
+            this.particles.push(new Particle(x, y, color));
+
+          }
+
+        }
+
+
+
+        addScore(base) {
+
+          const total = Math.round(base * this.comboMultiplier);
+
+          this.score += total;
+
+        }
+
+
+
+        breakCombo() {
+
+          this.comboMultiplier = 1;
+
+          this.comboTimer = 0;
+
+        }
+
+
+
+        pickEnemyBlueprint() {
+
+          const unlocked = ENEMY_ARCHETYPES.filter((entry) => this.wave >= entry.minWave);
+
+          const totalWeight = unlocked.reduce((sum, entry) => sum + entry.weight, 0);
+
+          let roll = Math.random() * totalWeight;
+
+          for (const entry of unlocked) {
+
+            roll -= entry.weight;
+
+            if (roll <= 0) {
+
+              return entry;
+
+            }
+
+          }
+
+          return unlocked[0];
+
+        }
+
+
+
+        spawnEnemy() {
+
+          const blueprint = this.pickEnemyBlueprint();
+
+          const margin = blueprint.radius + 24;
+
+          const x = randFloat(margin, this.width - margin);
+
+          const enemy = new Enemy(this, blueprint, x);
+
+          this.enemies.push(enemy);
+
+          this.enemiesSpawned += 1;
+
+        }
+
+
+
+        advanceWave() {
+
+          this.wave += 1;
+
+          this.enemiesSpawned = 0;
+
+          this.waveTarget = Math.round(10 + this.wave * 4);
+
+          this.spawnInterval = Math.max(0.45, this.spawnInterval * 0.92);
+
+          this.enemyCap = Math.min(12, 6 + Math.floor(this.wave / 1.5));
+
+          const now = performance.now();
+
+          this.lastWaveClear = now - (this.waveStartTimestamp || now);
+
+          this.waveStartTimestamp = now;
+
+          this.setDefaultTip();
+
+          const waveParamsResolver = () => ({ wave: formatNumber(this.wave), target: formatNumber(this.waveTarget) });
+
+          const waveParams = waveParamsResolver();
+
+          this.setMissionMessage('mission.waveIncoming', 4.5, waveParamsResolver);
+
+          pushToast(translate('toast.waveReady', { wave: waveParams.wave }));
+
+          this.resetObjectives();
+
+        }
+
+
+
+        onEnemyDestroyed(enemy) {
+
+          const previousCombo = this.comboMultiplier;
+
+          this.addScore(enemy.scoreValue);
+
+          this.comboMultiplier = clamp(this.comboMultiplier + 0.25, 1, 6);
+
+          if (Math.floor(this.comboMultiplier) > Math.floor(previousCombo) && this.comboMultiplier >= 2) {
+
+            const comboDisplay = formatNumber(this.comboMultiplier, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+            pushToast(translate('toast.comboStreak', { combo: comboDisplay }));
+
+          }
+
+          this.comboTimer = this.maxComboTime;
+
+          this.addParticles(enemy.x, enemy.y, 20, enemy.color);
+
+          if (Math.random() < enemy.dropChance) {
+
+            const type = randChoice(POWER_UP_TYPES);
+
+            this.powerUps.push(new PowerUp(this, enemy.x, enemy.y, type));
+
+          }
+
+        }
+
+
+        onEnemyEscaped() {
+
+          if (this.state !== "running") {
+
+            this.updateHUD();
+
+            this.input.flushFrame();
+
+            return;
+
+          }
+
+          this.escapeCount = Math.min(this.escapeLimit, this.escapeCount + 1);
+
+          this.breakCombo();
+
+          const remaining = Math.max(this.escapeLimit - this.escapeCount, 0);
+
+          if (remaining > 0) {
+
+            pushToast(translate('toast.enemyEscaped', { remaining: formatNumber(remaining) }));
+
+          } else {
+
+            pushToast(translate('toast.escapeLimit'));
+
+            this.updateHUD();
+
+            this.gameOver();
+
+            return;
+
+          }
+
+          this.updateHUD();
+
+        }
+
+
+
+        handleSpawning(dt) {
+
+          this.spawnTimer -= dt;
+
+          if (
+
+            this.enemiesSpawned < this.waveTarget &&
+
+            this.spawnTimer <= 0 &&
+
+            this.enemies.length < this.enemyCap
+
+          ) {
+
+            this.spawnEnemy();
+
+            const variance = randFloat(0.7, 1.2);
+
+            this.spawnTimer = Math.max(0.35, this.spawnInterval * variance);
+
+          }
+
+
+
+          if (
+
+            this.enemiesSpawned >= this.waveTarget &&
+
+            this.enemies.length === 0 &&
+
+            this.enemyProjectiles.length === 0
+
+          ) {
+
+            this.advanceWave();
+
+          }
+
+        }
+
+
+
+        handleCollisions() {
+
+          for (const projectile of this.projectiles) {
+
+            for (const enemy of this.enemies) {
+
+              const dx = projectile.x - enemy.x;
+
+              const dy = projectile.y - enemy.y;
+
+              const range = projectile.radius + enemy.radius;
+
+              if (dx * dx + dy * dy < range * range) {
+
+                enemy.hit(projectile.damage);
+
+                projectile.life = 0;
+
+                break;
+
+              }
+
+            }
+
+          }
+
+
+
+          this.projectiles = this.projectiles.filter((projectile) => projectile.life > 0 && !projectile.expired);
+
+
+
+          for (const blast of this.enemyProjectiles) {
+
+            const dx = blast.x - this.player.x;
+
+            const dy = blast.y - this.player.y;
+
+            const range = blast.radius + this.player.radius;
+
+            if (dx * dx + dy * dy < range * range) {
+
+              blast.life = 0;
+
+              this.breakCombo();
+
+              const alive = this.player.takeDamage(blast.damage);
+
+              this.addParticles(this.player.x, this.player.y, 12, "#ff8b63");
+
+              if (!alive) {
+
+                this.updateHUD();
+
+                this.gameOver();
+
+                return;
+
+              }
+
+            }
+
+          }
+
+
+
+          this.enemyProjectiles = this.enemyProjectiles.filter((blast) => blast.life > 0 && !blast.expired);
+
+
+
+          for (const enemy of this.enemies) {
+
+            const dx = enemy.x - this.player.x;
+
+            const dy = enemy.y - this.player.y;
+
+            const range = enemy.radius + this.player.radius;
+
+            if (dx * dx + dy * dy < range * range) {
+
+              enemy.dead = true;
+
+              this.breakCombo();
+
+              const alive = this.player.takeDamage(45);
+
+              this.addParticles(enemy.x, enemy.y, 18, enemy.color);
+
+              if (!alive) {
+
+                this.updateHUD();
+
+                this.gameOver();
+
+                return;
+
+              }
+
+            }
+
+          }
+
+
+
+          this.enemies = this.enemies.filter((enemy) => !enemy.dead);
+
+
+
+          for (const powerUp of this.powerUps) {
+
+            const dx = powerUp.x - this.player.x;
+
+            const dy = powerUp.y - this.player.y;
+
+            const range = powerUp.radius + this.player.radius;
+
+            if (dx * dx + dy * dy < range * range) {
+
+              const label = powerUp.apply(this.player);
+
+              this.powerUpsCollected += 1;
+
+              pushToast(translate('toast.powerUp', { label }));
+
+              this.setMissionMessage('message.powerUp', 4.5, { label });
+
+            }
+
+          }
+
+
+
+          this.powerUps = this.powerUps.filter((powerUp) => !powerUp.collected && !powerUp.expired);
+
+
+
+          if (this.player.lives <= 0) {
+
+            this.gameOver();
+
+          }
+
+        }
+
+
+
+        update(dt) {
+
+          this.fxTimer += dt;
+
+          for (const star of this.stars) {
+
+            star.update(dt);
+
+          }
+
+
+
+          if (this.messageTimer > 0) {
+
+            this.messageTimer -= dt;
+
+            if (this.messageTimer <= 0) {
+
+              this.showDefaultMessage();
+
+            }
+
+          }
+
+
+
+          this.particles.forEach((particle) => particle.update(dt));
+
+          this.particles = this.particles.filter((particle) => !particle.expired);
+
+
+
+          if (this.state !== "running") {
+
+            this.updateHUD();
+
+            this.input.flushFrame();
+
+            return;
+
+          }
+
+
+
+          this.player.update(dt, this.input);
+
+          this.projectiles.forEach((projectile) => projectile.update(dt));
+
+          this.projectiles = this.projectiles.filter((projectile) => !projectile.expired);
+
+          this.enemyProjectiles.forEach((blast) => blast.update(dt));
+
+          this.enemyProjectiles = this.enemyProjectiles.filter((blast) => !blast.expired);
+
+          this.enemies.forEach((enemy) => enemy.update(dt));
+
+          this.enemies = this.enemies.filter((enemy) => !enemy.dead);
+
+          this.powerUps.forEach((powerUp) => powerUp.update(dt));
+
+          this.powerUps = this.powerUps.filter((powerUp) => !powerUp.expired && !powerUp.collected);
+
+
+
+          this.handleCollisions();
+
+          this.handleSpawning(dt);
+
+
+
+          if (this.comboTimer > 0) {
+
+            this.comboTimer -= dt;
+
+            if (this.comboTimer <= 0) {
+
+              this.breakCombo();
+
+            }
+
+          }
+
+
+
+          this.updateObjectives();
+
+          this.updateHUD();
+
+          this.input.flushFrame();
+
+        }
+
+
+
+        draw() {
+
+          this.ctx.fillStyle = "#02030f";
+
+          this.ctx.fillRect(0, 0, this.width, this.height);
+
+
+
+          for (const star of this.stars) {
+
+            star.draw(this.ctx);
+
+          }
+
+
+
+          this.powerUps.forEach((powerUp) => powerUp.draw(this.ctx));
+
+          this.enemies.forEach((enemy) => enemy.draw(this.ctx));
+
+          this.enemyProjectiles.forEach((blast) => blast.draw(this.ctx));
+
+          this.projectiles.forEach((projectile) => projectile.draw(this.ctx));
+
+          this.particles.forEach((particle) => particle.draw(this.ctx));
+
+
+
+          if (this.player) {
+
+            this.player.draw(this.ctx);
+
+          }
+
+          if (this.visualMode === "enhanced") {
+
+            const pulse = 0.18 + Math.sin(this.fxTimer * 1.4) * 0.07;
+
+            const gradient = this.ctx.createRadialGradient(this.width / 2, this.height / 2, 80, this.width / 2, this.height / 2, this.width * 0.9);
+
+            gradient.addColorStop(0, 'rgba(0, 214, 255, ' + pulse + ')');
+
+            gradient.addColorStop(0.45, "rgba(111, 87, 255, 0.18)");
+
+            gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+            this.ctx.save();
+
+            this.ctx.globalCompositeOperation = "lighter";
+
+            this.ctx.fillStyle = gradient;
+
+            this.ctx.fillRect(0, 0, this.width, this.height);
+
+            this.ctx.restore();
+
+          }
+
+        }
+
+
+
+        updateHUD() {
+
+          this.ui.score.textContent = formatNumber(this.score);
+
+          this.ui.wave.textContent = formatNumber(this.wave);
+
+          this.ui.lives.textContent = formatNumber(this.player.lives);
+
+          this.ui.combo.textContent = `x${formatNumber(this.comboMultiplier, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
+
+          if (this.ui.escaped) {
+
+            const current = formatNumber(this.escapeCount);
+
+            const limit = formatNumber(this.escapeLimit);
+
+            this.ui.escaped.textContent = `${current} / ${limit}`;
+
+          }
+
+          this.ui.shieldFill.style.width = `${(this.player.shield / this.player.maxShield) * 100}%`;
+
+          this.ui.energyFill.style.width = `${(this.player.energy / this.player.maxEnergy) * 100}%`;
+
+        }
+
+
+
+        frame(timestamp) {
+
+          if (this.lastTime === null) {
+
+            this.lastTime = timestamp;
+
+          }
+
+          const delta = clamp((timestamp - this.lastTime) / 1000, 0, 0.12);
+
+          this.lastTime = timestamp;
+
+          this.update(delta);
+
+          this.draw();
+
+          requestAnimationFrame(this.frame);
+
+        }
+
+      }
+
+
+
+      const input = new InputManager(canvas);
+
+      const game = new Game(ctx, input, ui);
+
+      gameInstance = game;
+
+      applyLocale(currentLocale);
+
+      applyAudioState();
+
+      applyVisualMode(state.visualMode, { silent: true, force: true });
+
+      requestAnimationFrame(game.frame);
+
+    })();
+
+  </script>
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
